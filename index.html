@@ -1,11 +1,62 @@
+
+
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>MHL Wallet Test</title>
+  <title>MHL Wallet Monitor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 500px;
+      margin: auto;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #balance {
+      margin-top: 20px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-  <h1>Тестовый монитор кошелька MHL</h1>
-  <p>Сайт работает. Баланс будет выводиться позже.</p>
+
+  <h1>Монитор кошелька MHL</h1>
+
+  <p>Нажми кнопку, чтобы узнать текущий баланс TON:</p>
+
+  <button onclick="checkBalance()">Проверить баланс</button>
+
+  <div id="balance">Баланс: —</div>
+
+<script>
+async function checkBalance() {
+    const address = "ВСТАВЬ_СВОЙ_TON_ADRESS_ИЗ_TONKEEPER";
+    const url = `https://tonapi.io/v2/accounts/${address}`;
+
+    document.getElementById("balance").innerText = "Получаю данные...";
+
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const nano = data.balance; // баланс в нанотонах
+        const ton = nano / 1e9;
+
+        document.getElementById("balance").innerText =
+          `Баланс: ${ton.toFixed(6)} TON`;
+    } catch (error) {
+        document.getElementById("balance").innerText =
+          "Ошибка получения баланса";
+    }
+}
+</script>
+
 </body>
 </html>
