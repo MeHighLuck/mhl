@@ -1,8 +1,3 @@
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -38,27 +33,41 @@
   <div id="balance">Баланс: —</div>
 
 <script>
-async function checkBalance() {
-    const address = "UQAVnBTI7XguH9S574rYV7ZRpii0CroT2_jSZNs0ieehZmgI";
-    const url = `https://tonapi.io/v2/accounts/${address}`;
+  // Твой настоящий адрес Tonkeeper
+  const ADDRESS = "UQAVnBTI7XguH9S574rYV7ZRpii0CroT2_jSZNs0ieehZmgI";
 
-    document.getElementById("balance").innerText = "Получаю данные...";
+  async function checkBalance() {
+    const balanceEl = document.getElementById("balance");
+    balanceEl.textContent = "Получаю данные...";
 
     try {
-        const response = await fetch(url);
-        const data = await response.json();
+      const url = `https://tonapi.io/v2/blockchain/accounts/${ADDRESS}`;
+      const resp = await fetch(url);
 
-        const nano = data.balance; // баланс в нанотонах
-        const ton = nano / 1e9;
+      if (!resp.ok) {
+        throw new Error("HTTP error " + resp.status);
+      }
 
-        document.getElementById("balance").innerText =
-          `Баланс: ${ton.toFixed(6)} TON`;
-    } catch (error) {
-        document.getElementById("balance").innerText =
-          "Ошибка получения баланса";
+      const data = await resp.json();
+
+      // баланс в нанотонах
+      const nano = Number(data.balance ?? 0);
+
+      if (isNaN(nano)) {
+        balanceEl.textContent = "Ошибка: баланс не найден";
+        return;
+      }
+
+      const ton = nano / 1e9;
+
+      balanceEl.textContent = `Баланс: ${ton} TON`;
+    } catch (e) {
+      console.error(e);
+      balanceEl.textContent = "Ошибка получения баланса";
     }
-}
+  }
 </script>
 
 </body>
 </html>
+
