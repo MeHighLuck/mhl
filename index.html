@@ -50,24 +50,34 @@
     debugEl.textContent = "";
 
     try {
-      const url = `https://tonapi.io/v3/accounts/${ADDRESS}`;
-      const resp = await fetch(url);
+      const body = {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getAddressInformation",
+        params: { address: ADDRESS }
+      };
+
+      const resp = await fetch("https://toncenter.com/api/v2/jsonRPC", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
 
       const data = await resp.json();
       debugEl.textContent = JSON.stringify(data, null, 2);
 
-      if (data?.balance === undefined) {
-        balanceEl.textContent = "Баланс не найден в ответе API";
+      if (!data?.result?.balance) {
+        balanceEl.textContent = "Баланс: 0 TON";
         return;
       }
 
-      const nano = Number(data.balance);
+      const nano = Number(data.result.balance);
       const ton = nano / 1e9;
 
       balanceEl.textContent = `Баланс: ${ton} TON`;
     } catch (e) {
       balanceEl.textContent = "Ошибка получения баланса";
-      document.getElementById("debug").textContent = e.toString();
+      debugEl.textContent = e.toString();
     }
   }
 </script>
