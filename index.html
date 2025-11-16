@@ -21,11 +21,10 @@
       font-weight: bold;
     }
     #debug {
-      margin-top: 10px;
+      margin-top: 15px;
       font-size: 12px;
-      color: #555;
+      color: #444;
       white-space: pre-wrap;
-      word-break: break-all;
     }
   </style>
 </head>
@@ -41,7 +40,6 @@
   <div id="debug"></div>
 
 <script>
-  // Твой настоящий адрес Tonkeeper
   const ADDRESS = "UQAVnBTI7XguH9S574rYV7ZRpii0CroT2_jSZNs0ieehZmgI";
 
   async function checkBalance() {
@@ -52,38 +50,24 @@
     debugEl.textContent = "";
 
     try {
-      const url = `https://toncenter.com/api/v2/getAddressInformation?address=${ADDRESS}`;
+      const url = `https://tonapi.io/v3/accounts/${ADDRESS}`;
       const resp = await fetch(url);
 
-      if (!resp.ok) {
-        throw new Error("HTTP error " + resp.status);
-      }
-
       const data = await resp.json();
+      debugEl.textContent = JSON.stringify(data, null, 2);
 
-      // ожидаем структуру { ok: true, result: { balance: "123456789" } }
-      if (!data.ok || !data.result) {
-        balanceEl.textContent = "Ошибка: неожиданный формат ответа";
-        debugEl.textContent = JSON.stringify(data, null, 2);
+      if (data?.balance === undefined) {
+        balanceEl.textContent = "Баланс не найден в ответе API";
         return;
       }
 
-      const nanoStr = data.result.balance ?? "0";
-      const nano = Number(nanoStr);
-
-      if (Number.isNaN(nano)) {
-        balanceEl.textContent = "Ошибка: баланс не число";
-        debugEl.textContent = "raw balance = " + nanoStr + "\n\n" +
-                              JSON.stringify(data, null, 2);
-        return;
-      }
-
+      const nano = Number(data.balance);
       const ton = nano / 1e9;
+
       balanceEl.textContent = `Баланс: ${ton} TON`;
     } catch (e) {
-      console.error(e);
       balanceEl.textContent = "Ошибка получения баланса";
-      debugEl.textContent = String(e);
+      document.getElementById("debug").textContent = e.toString();
     }
   }
 </script>
