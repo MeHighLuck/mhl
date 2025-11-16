@@ -7,7 +7,7 @@
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
-      max-width: 500px;
+      max-width: 600px;
       margin: auto;
     }
     button {
@@ -21,10 +21,13 @@
       font-weight: bold;
     }
     #debug {
-      margin-top: 15px;
+      margin-top: 20px;
       font-size: 12px;
       color: #444;
       white-space: pre-wrap;
+      word-break: break-all;
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
     }
   </style>
 </head>
@@ -50,34 +53,38 @@
     debugEl.textContent = "";
 
     try {
-      const body = {
-        jsonrpc: "2.0",
-        id: 1,
-        method: "getAddressInformation",
-        params: { address: ADDRESS }
-      };
+      const url = `https://tonapi.io/v2/accounts/${ADDRESS}`;
+      const resp = await fetch(url);
 
-      const resp = await fetch("https://toncenter.com/api/v2/jsonRPC", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
+      // Пишем статус для контроля
+      debugEl.textContent = `HTTP status: ${resp.status}\n`;
 
       const data = await resp.json();
-      debugEl.textContent = JSON.stringify(data, null, 2);
+      debugEl.textContent += JSON.stringify(data, null, 2);
 
-      if (!data?.result?.balance) {
-        balanceEl.textContent = "Баланс: 0 TON";
+      // Пытаемся вытащить баланс из разных вариантов структуры
+      let nano = 0;
+
+      if (typeof data.balance === "string" || typeof data.balance === "number") {
+        nano = Number(data.balance);
+      } else if (data?.account?.balance !== undefined) {
+        nano = Number(data.account.balance);
+      } else {
+        // если не нашли поле – показываем 0 и просто оставляем JSON ниже
+        balanceEl.textContent = "Баланс: 0 TON (поле balance не найдено)";
         return;
       }
 
-      const nano = Number(data.result.balance);
-      const ton = nano / 1e9;
+      if (Number.isNaN(nano)) {
+        balanceEl.textContent = "Баланс: не удалось преобразовать число";
+        return;
+      }
 
+      const ton = nano / 1e9;
       balanceEl.textContent = `Баланс: ${ton} TON`;
     } catch (e) {
       balanceEl.textContent = "Ошибка получения баланса";
-      debugEl.textContent = e.toString();
+      debugEl.textContent = "Error: " + e.toString();
     }
   }
 </script>
