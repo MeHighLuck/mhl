@@ -40,14 +40,10 @@
     <div id="updated">Ещё не обновлялось</div>
 
     <script>
-        // Адрес в том формате, как ты копируешь из Tonkeeper (UQAV...)
+        // Адрес ровно в том виде, как копируешь из Tonkeeper (он уже проверен)
         const ADDRESS = "UQAVnBTI7XguH9S574rYV7ZRPiiOCroT2_jSZNs0ieehZmgI";
-
-        // TonAPI v2 по user-friendly адресу
         const API_URL = `https://tonapi.io/v2/accounts/${ADDRESS}`;
-
-        // автообновление раз в 15 секунд
-        const REFRESH_INTERVAL_MS = 15000;
+        const REFRESH_INTERVAL_MS = 15000; // 15 секунд
 
         async function fetchBalance(isManual = false) {
             const balanceEl = document.getElementById("balance");
@@ -59,14 +55,11 @@
 
             try {
                 const response = await fetch(API_URL);
-
                 if (!response.ok) {
                     throw new Error("HTTP " + response.status);
                 }
 
                 const data = await response.json();
-
-                // TonAPI v2: баланс в поле balance (в нанотонах)
                 const nano = Number(data.balance ?? 0);
 
                 if (Number.isNaN(nano)) {
@@ -85,9 +78,8 @@
             } catch (e) {
                 console.error(e);
                 if (isManual) {
-                    balanceEl.textContent = "Баланс: ошибка запроса";
+                    balanceEl.textContent = "Баланс: ошибка получения данных";
                 }
-                // при автообновлении не меняем текст, чтобы не мигало от ошибок
             }
         }
 
@@ -95,6 +87,7 @@
             fetchBalance(true);
         }
 
+        // при загрузке страницы один запрос и запуск автообновления
         window.addEventListener("load", () => {
             fetchBalance(false);
             setInterval(fetchBalance, REFRESH_INTERVAL_MS);
