@@ -1,92 +1,75 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>MHL Wallet Monitor</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      max-width: 600px;
-      margin: auto;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    #balance {
-      margin-top: 20px;
-      font-size: 20px;
-      font-weight: bold;
-    }
-    #debug {
-      margin-top: 20px;
-      font-size: 12px;
-      color: #444;
-      white-space: pre-wrap;
-      word-break: break-all;
-      border-top: 1px solid #ccc;
-      padding-top: 10px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Монитор кошелька MHL</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        pre {
+            text-align: left;
+            font-size: 14px;
+            background: #f1f1f1;
+            padding: 10px;
+            overflow: auto;
+        }
+    </style>
 </head>
 <body>
 
-  <h1>Монитор кошелька MHL</h1>
+<h1>Монитор кошелька MHL</h1>
+<p>Нажми кнопку, чтобы узнать текущий баланс TON:</p>
 
-  <p>Нажми кнопку, чтобы узнать текущий баланс TON:</p>
+<button onclick="checkBalance()">Проверить баланс</button>
 
-  <button onclick="checkBalance()">Проверить баланс</button>
-
-  <div id="balance">Баланс: —</div>
-  <div id="debug"></div>
+<div id="result"></div>
 
 <script>
-  const ADDRESS = "UQAVnBTI7XguH9S574rYV7ZRpii0CroT2_jSZNs0ieehZmgI";
+    const walletAddress = "UQAVnBTI7XguH9S574rYV7ZRPiiOCroT2_jSZNs0ieehZmgI";
 
-  async function checkBalance() {
-    const balanceEl = document.getElementById("balance");
-    const debugEl = document.getElementById("debug");
+    async function checkBalance() {
+        document.getElementById("result").innerHTML = "Получаю данные...";
 
-    balanceEl.textContent = "Получаю данные...";
-    debugEl.textContent = "";
+        try {
+            const apiUrl = `https://tonapi.io/v2/accounts/${walletAddress}`;
+            const response = await fetch(apiUrl);
 
-    try {
-      const url = `https://tonapi.io/v2/accounts/${ADDRESS}`;
-      const resp = await fetch(url);
+            if (!response.ok) {
+                throw new Error("HTTP error " + response.status);
+            }
 
-      // Пишем статус для контроля
-      debugEl.textContent = `HTTP status: ${resp.status}\n`;
+            const data = await response.json();
 
-      const data = await resp.json();
-      debugEl.textContent += JSON.stringify(data, null, 2);
+            if (!data.balance) {
+                document.getElementById("result").innerHTML =
+                    "Баланс: 0 TON<br><br>Ответ API:<pre>" + JSON.stringify(data, null, 2) + "</pre>";
+                return;
+            }
 
-      // Пытаемся вытащить баланс из разных вариантов структуры
-      let nano = 0;
+            const balanceTon = data.balance / 1e9;
 
-      if (typeof data.balance === "string" || typeof data.balance === "number") {
-        nano = Number(data.balance);
-      } else if (data?.account?.balance !== undefined) {
-        nano = Number(data.account.balance);
-      } else {
-        // если не нашли поле – показываем 0 и просто оставляем JSON ниже
-        balanceEl.textContent = "Баланс: 0 TON (поле balance не найдено)";
-        return;
-      }
+            document.getElementById("result").innerHTML =
+                "Баланс: " + balanceTon + " TON<br><br>Ответ API:<pre>" + JSON.stringify(data, null, 2) + "</pre>";
 
-      if (Number.isNaN(nano)) {
-        balanceEl.textContent = "Баланс: не удалось преобразовать число";
-        return;
-      }
-
-      const ton = nano / 1e9;
-      balanceEl.textContent = `Баланс: ${ton} TON`;
-    } catch (e) {
-      balanceEl.textContent = "Ошибка получения баланса";
-      debugEl.textContent = "Error: " + e.toString();
+        } catch (error) {
+            document.getElementById("result").innerHTML =
+                "Ошибка получения баланса<br><br>" + error;
+        }
     }
-  }
 </script>
 
 </body>
